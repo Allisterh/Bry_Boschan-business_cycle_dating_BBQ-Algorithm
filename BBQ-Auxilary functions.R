@@ -32,17 +32,23 @@ identify.turning.point = function(window){
   
 }
 
-get.max.peak = function(peaks,start_period,end_period){
+get.extreme.point = function(points,start_period,end_period,
+                             peaks = TRUE){
   
-  # browser()
+  sub_points = points[index(points) >= start_period & index(points) <= end_period,]
   
-  sub_peaks = peaks[index(peaks) >= start_period & index(peaks) <= end_period,]
+  if (length(sub_points) == 0){return(NULL)}
   
-  if (length(sub_peaks) > 0) {
+  if (peaks) {
     
-    return(sub_peaks[sub_peaks[,1] == max(sub_peaks[,1]) ,])
+    return(sub_points[sub_points[,1] == max(sub_points[,1]),])
+    
+  } else {
+    
+    return(sub_points[sub_points[,1] == min(sub_points[,1]),])
     
   }
+  
 }
 
 get.alternating.peaks = function(peaks, troughs, timeframe){
@@ -56,15 +62,32 @@ get.alternating.peaks = function(peaks, troughs, timeframe){
   
   names(points) = c("Start_Point","End_Point")
   
-  points = apply(points, 1, list)
-  
-  alt.peaks = sapply(points,
-         function(Z,peaks){return(get.max.peak(start_period = Z[[1]][1],
-                                         end_period = Z[[1]][2],
-                                         peaks = peaks))},
-         peaks = peaks)
+  alt.peaks = apply(points, 1,
+                    function(Z,peaks){get.extreme.point(Z[1],Z[2],
+                                                   points = peaks)},
+                    peaks = peaks)
   
   alt.peaks = do.call(rbind.xts,alt.peaks)
+  
+}
+
+get.alternating.troughs = function(peaks, troughs, timeframe){
+  
+  start_points = index(peaks)
+  
+  end_points = c(index(peaks)[-1],timeframe[length(timeframe)])
+  
+  points = cbind.data.frame(start_points,
+                            end_points)
+  
+  names(points) = c("Start_Point","End_Point")
+  
+  alt.troughs = apply(points, 1,
+                    function(Z,troughs){get.extreme.point(Z[1],Z[2],
+                                                        points = troughs)},
+                    troughs = troughs)
+  
+  alt.troughs = do.call(rbind.xts,alt.troughs)
   
 }
 
