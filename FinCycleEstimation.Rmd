@@ -1,29 +1,69 @@
 ---
 title: "שיטות זיהוי מחזור פיננסי"
 author: "מיכאל גורקוב"
-output: pdf_document
+header-includes:
+   - \usepackage{multirow,rotating}
+   - \usepackage{fontspec}
+   - \setmainfont{David}
+   - \usepackage{polyglossia}
+   - \setdefaultlanguage{hebrew}
+   - \usepackage[fontsize=13pt]{scrextend}
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r Import data,libraries and functions}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+source(paste0("C:\\Users\\Misha\\Documents\\BBQ-Algorithm\\",
+              "BBQ-Auxilary functions.R"))
 
-```{r cars}
-summary(cars)
+library(xts)
+
+library(PerformanceAnalytics)
+
+gdp = import.gdp.data(paste0("C:\\Users\\Misha\\Documents\\",
+                             "BBQ-Algorithm\\GDP.csv"))
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+שיטות לזיהוי מחזור עסקים מתחלקות לשני סוגים: שיטות Turning Point ושיטותFrequency Analysis
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+<!-- ```{r plot } -->
+
+<!-- # Identify a set of potential peaks and troughs -->
+
+<!-- df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point, -->
+<!--                         align = "center")) -->
+
+<!-- names(df) = c("GDP","TP") -->
+
+<!-- alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,], -->
+<!--                                   troughs = df[df$TP == -1,], -->
+<!--                                   timeframe = index(df)) -->
+
+<!-- alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,], -->
+<!--                                   troughs = df[df$TP == -1,], -->
+<!--                                   timeframe = index(df)) -->
+
+<!-- cycle_date = paste(as.Date(index(alt.peaks)), -->
+<!--                    as.Date(index(alt.troughs)),sep = "/") -->
+
+<!-- chart.TimeSeries(df$GDP * 10 ^ (-3), -->
+<!--                  main = "Business Cycle - Recessions\n (quarterly GDP)", -->
+<!--                  xaxis = FALSE,ylab = "Billions ILS", -->
+<!--                  period.areas = cycle_date,period.color = "lightblue") -->
+
+<!-- axis(side = 1,at = seq_along(index(df)),labels = index(df)) -->
+
+
+<!-- ``` -->
+
