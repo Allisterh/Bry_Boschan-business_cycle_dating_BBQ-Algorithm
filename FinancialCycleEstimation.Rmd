@@ -1,0 +1,91 @@
+---
+title: "שיטות לזיהוי מחזור פיננסי"
+author: "מיכאל גורקוב"
+header-includes:
+   - \usepackage{multirow,rotating}
+   - \usepackage{fontspec}
+   - \setmainfont{David}
+   - \usepackage{polyglossia}
+   - \setdefaultlanguage{hebrew}
+   - \usepackage[fontsize=13pt]{scrextend}
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+```
+
+
+
+```{r Load libraries and auxilary function}
+
+source(paste0("C:\\Users\\Misha\\Documents\\BBQ-Algorithm\\",
+              "BBQ-Auxilary functions.R"))
+
+library(xts)
+
+library(PerformanceAnalytics)
+
+gdp = import.gdp.data(paste0("C:\\Users\\Misha\\Documents\\",
+                             "BBQ-Algorithm\\GDP.csv"))
+
+
+```
+
+## מבוא
+
+בדצמבר 2010, קבעה הועדה לפיקוח על הבנקאות של מסגרת באזל הנחיות ליישום כלי מדיניות מאקרו יציבותית חדש - כרית הון אנטי מחזורית. הכלי נועד לחזק את יחס ההון לנכסי סיכון אשר מהווה אינדיקטור לאיתנותו של בנק מסחרי בשמשו כרית לספיגת הפסדיו. הרעיון שעומד בבסיסה של כרית הון אנטי מחזורית הוא לגרום לבנקים להחזיק יחס הון מחזורי - גבוה בתקופות גאות ונמוך בתקופות שפל. מטרתה של הכרית היא למנוע הגבלה של היצע אשראי (על ידי בנקים) בתקופות שפל על ידי צבירה של הון בזמני גאות ובכך למעשה להגן על המערכת הבנקאית. אחת התוצאות האפשריות של יישום כלי זה (אם כי לא מטרה בפני עצמה) הינה מיתון המחזור הפיננסי על ידי הצבה של דרישה להון גבוה בתקופות גאות והורדת הדרישה בתקופות שפל. 
+בחלקו הראשון של נייר זה יוצג יישום של מתודולוגיה המוצעת במסגרת באזל 3 על נתונים של הכלכלה בישראל ותוצג כרית ההון המומלצת בהתאם למתודולוגיה זו. בחלקו השני של הנייר תוצג סקירה של הניסיון העולמי של שימוש בכרית הון אנטי מחזורית.
+
+## מתודולוגיה של באזל 3
+
+ועדת הפיקוח של מסגרת באזל הדגישה את חשיבות מציאת מדד פשוט שיוכל לתת התראה מדויקת ובזמן אמת על העיתוי והעוצמה של הפעלת כרית הון בגאות הפיננסית והסרתה בתקופות מיתון. המלצת הועדה היא לאמץ את המשתנה של פער האשראי - ההפרש בין יחס סך האשראי הפרטי לתוצר המקומי ממגמתו כאינדיקטור שלפיו תופעל ותוסר כרית הון האנטי מחזורית.
+
+### חישוב פער האשראי
+
+מסגרת באזל מנחה להגדיר את האשראי בצורה רחבה כסך כל האשראי הניתן למגזר הפרטי. עבור המשק הישראלי האשראי הכולל חושב כסכום של אשראי למשקי בית ואשראי למגזר העסקי (הלא פיננסי). לצורך קביעת גובה כרית ההון יש ראשית לחשב את גובה פער האשראי ולאחר מכן להמיר את התוצאה שהתקבלה לגובה כרית ההון הנדרשת. התהליך למעשה מורכב משלשה שלבים:
+
+1. חישוב היחס בין האשראי הכולל לתוצר
+
+2. חישוב פער האשראי
+
+3. המרה של פער האשראי לגובה כרית הון אנטי מחזורית
+
+```{r Import Data}
+
+# Identify a set of potential peaks and troughs
+
+df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
+                        align = "center"))
+
+names(df) = c("GDP","TP")
+
+alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,],
+                                  troughs = df[df$TP == -1,],
+                                  timeframe = index(df))
+
+alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,],
+                                  troughs = df[df$TP == -1,],
+                                  timeframe = index(df))
+
+cycle_date = paste(as.Date(index(alt.peaks)),
+                   as.Date(index(alt.troughs)),sep = "/")
+
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
+
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
+```
+
+
