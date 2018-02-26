@@ -92,3 +92,64 @@ get.alternating.troughs = function(peaks, troughs, timeframe){
 }
 
 
+# Approximation to BBQ algorithm
+
+get.peaks.bbq.approx = function(window){
+  
+  pos = ceiling(length(window) / 2)
+  
+  if (window[pos] == max(window)) {
+    
+    return(1)
+  
+  } else {
+    
+    return(0)
+    
+  }
+}
+
+get.troughs.bbq.approx = function(window){
+  
+  pos = ceiling(length(window) / 2)
+  
+  if (window[pos] == min(window)) {
+    
+    return(-1)
+    
+  } else {
+    
+    return(0)
+    
+  }
+}
+
+add.cycle.state.bbq.approx = function(df){
+  
+  df$State = 0
+  
+  df$State[1] = df$State[2] = ifelse(min(index(df)[!df$peaks == 0]) < 
+                 min(index(df)[!df$troughs == 0]),1,0)
+  
+  for (rownum in 3:nrow(df)){
+    
+    t1 = rownum - 1
+    
+    t2 = rownum - 2
+    
+    # df$State[rownum] = df$State[prev] * (1 - df$peaks[prev]) + 
+    #                    (1 - df$State[prev]) * df$troughs[prev]
+    
+    df$State[rownum] = coredata(df$State[t1]) * (1 - coredata(df$State[t2])) + 
+                       coredata(df$State[t1]) * coredata(df$State[t2]) * (1 - coredata(df$peaks[t1])) + 
+                       (1 - coredata(df$State[t1])) * (1 - coredata(df$State[t2])) * coredata(df$troughs[t1])
+    
+   }
+  
+  return(df) 
+  
+  
+}
+
+
+
