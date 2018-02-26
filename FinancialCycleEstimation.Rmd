@@ -79,3 +79,43 @@ axis(side = 1,at = seq_along(index(df)),labels = index(df))
 ```
 
 
+
+
+```{r plot bbq approximation}
+
+# Calculate BBQ approximation
+
+k = 5
+
+peaks = rollapply(gdp, width = k, FUN = get.peaks.bbq.approx,
+                            align = "center")
+
+troughs = rollapply(gdp, width = k, FUN = get.troughs.bbq.approx,
+                  align = "center") * (-1)
+
+df_bbq._approx = merge.xts(peaks,troughs)
+
+df_bbq._approx = df_bbq._approx[complete.cases(df_bbq._approx),]
+
+df_bbq._approx = merge.xts(gdp,add.cycle.state.bbq.approx(df_bbq._approx),join = "inner")
+
+# Plot data
+
+cycle_date = as.Date(index(df_bbq._approx)[df_bbq._approx$State == 1])
+
+start_dates = cycle_date[seq.int(from = 1,to = length(cycle_date)-1,by = 2)]
+
+end_dates = cycle_date[seq.int(from = 2,to = length(cycle_date),by = 2)]
+
+cycle_date = paste(start_dates,end_dates,sep = "/")
+
+chart.TimeSeries(df_bbq._approx$gdp * 10 ^ (-3),
+                 main = "Business Cycle - Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
+
+axis(side = 1,at = seq_along(index(df_bbq._approx)),
+     labels = index(df_bbq._approx))
+
+```
+
