@@ -27,10 +27,26 @@ x = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
 
 names(x) = c("GDP","TP")
 
-plot.xts(x$GDP, grid.col = "white", main = "GDP")
+alt.peaks = get.alternating.peaks(peaks = x[x$TP == 1,],
+                                  troughs = x[x$TP == -1,],
+                                  timeframe = index(x))
 
-points(x$GDP[x$TP == 1], col = "green", pch = 20, cex = 2)
+alt.troughs = get.alternating.troughs(peaks = x[x$TP == 1,],
+                                  troughs = x[x$TP == -1,],
+                                  timeframe = index(x))
 
-points(x$GDP[x$TP == -1], col = "red", pch = 20, cex = 2)
+
+names(x) = c("GDP","TP")
+
+plot.xts(x$GDP, grid.col = "white", main = "GDP", yaxis.right = FALSE)
+
+# points(x$GDP[x$TP == 1], col = "green", pch = 20, cex = 2)
+
+# points(x$GDP[x$TP == -1], col = "red", pch = 20, cex = 2)
+
+points(alt.peaks, col = "green", pch = 20, cex = 2)
+
+points(alt.troughs, col = "red", pch = 20, cex = 2)
+
 
 x[x$GDP == max(x$GDP["::2002"])]
