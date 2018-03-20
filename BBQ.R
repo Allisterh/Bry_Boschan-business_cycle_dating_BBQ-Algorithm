@@ -13,40 +13,70 @@
 source(paste0("C:\\Users\\Misha\\Documents\\BBQ-Algorithm\\",
               "BBQ-Auxilary functions.R"))
 
-library(xts)
-
 library(PerformanceAnalytics)
 
 gdp = import.gdp.data(paste0("C:\\Users\\Misha\\Documents\\",
                              "BBQ-Algorithm\\GDP.csv"))
 
-# Identify a set of potential peaks and troughs
 
-x = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
-                        align = "center"))
+# 1. Identify a set of potential peaks and troughs using turning point (K rule)
 
-names(x) = c("GDP","TP")
+df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
+                             align = "center"))
 
-alt.peaks = get.alternating.peaks(peaks = x[x$TP == 1,],
-                                  troughs = x[x$TP == -1,],
-                                  timeframe = index(x))
+names(df) = c("GDP","TP")
 
-alt.troughs = get.alternating.troughs(peaks = x[x$TP == 1,],
-                                  troughs = x[x$TP == -1,],
-                                  timeframe = index(x))
+# 2. Enforce alternating points by selecting highest (resp. lowest)
+# consecutive peaks (resp. troughs).
 
+alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,],
+                                  troughs = df[df$TP == -1,],
+                                  timeframe = index(df))
 
-names(x) = c("GDP","TP")
+alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,],
+                                      troughs = df[df$TP == -1,],
+                                      timeframe = index(df))
 
-plot.xts(x$GDP, grid.col = "white", main = "GDP", yaxis.right = FALSE)
+cycle_date = paste(as.Date(index(alt.peaks)),
+                   as.Date(index(alt.troughs)),sep = "/")
 
-# points(x$GDP[x$TP == 1], col = "green", pch = 20, cex = 2)
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
 
-# points(x$GDP[x$TP == -1], col = "red", pch = 20, cex = 2)
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
 
-points(alt.peaks, col = "green", pch = 20, cex = 2)
+#--------------------------------------------------------------------------------
 
-points(alt.troughs, col = "red", pch = 20, cex = 2)
+# 3. Implement censoring rules : Censor insufficient phase length
 
+phase.censor_df = get.phase.censored.points (peaks = alt.peaks, troughs = alt.troughs,
+                                       min_phase_length = 2)
 
-x[x$GDP == max(x$GDP["::2002"])]
+cycle_date = paste(as.Date(index(phase.censor_df$censored_peaks)),
+                   as.Date(index(phase.censor_df$censored_troughs)),sep = "/")
+
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Phase censored Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
+
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
+
+#------------------------------------------------------------------------------
+
+cycle.censor_df = get.cycle.censored.points(peaks = phase.censor_df$censored_peaks,
+                                             troughs = phase.censor_df$censored_troughs,
+                                             min_cycle_length = 5)
+
+cycle_date = paste(as.Date(index(cycle.censor_df$censored_peaks)),
+                   as.Date(index(cycle.censor_df$censored_troughs)),sep = "/")
+
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Cycle censored Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
+
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
+

@@ -52,33 +52,74 @@ gdp = import.gdp.data(paste0("C:\\Users\\Misha\\Documents\\",
 
 ```{r plot no cencoring bbq}
 
-# Identify a set of potential peaks and troughs
+  # Identify a set of potential peaks and troughs
+  
+  df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
+                          align = "center"))
+  
+  names(df) = c("GDP","TP")
+  
+  alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,],
+                                    troughs = df[df$TP == -1,],
+                                    timeframe = index(df))
+  
+  alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,],
+                                    troughs = df[df$TP == -1,],
+                                    timeframe = index(df))
+  
+  cycle_date = paste(as.Date(index(alt.peaks)),
+                     as.Date(index(alt.troughs)),sep = "/")
+  
+  chart.TimeSeries(df$GDP * 10 ^ (-3),
+                   main = "Business Cycle - Recessions\n (quarterly GDP)",
+                   xaxis = FALSE,ylab = "Billions ILS",
+                   period.areas = cycle_date,period.color = "lightblue")
+  
+  axis(side = 1,at = seq_along(index(df)),labels = index(df))
+```
 
-df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
-                        align = "center"))
+הפעלת מנגנון סינון שלבי המחזור דורש שכל שלב ימשך לפחות 2 רבעונים, במקרה זה שלב התרחבות אשר התחיל ברבעון השלישי של שנת 2008 והסתיים ברבעון הרביעי של 2008 ולפיכך נמשך רק רבעון אחד צריך להימחק מה שהופך את שלב הצמצום אשר התחיל ברבעון הראשון של 2008 להיות ארוך יותר.
 
-names(df) = c("GDP","TP")
+```{r plot phase censored bbq}
 
-alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,],
-                                  troughs = df[df$TP == -1,],
-                                  timeframe = index(df))
+  # Identify a set of potential peaks and troughs
+  
+ phase.censor_df = get.phase.censored.points (peaks = alt.peaks, troughs = alt.troughs,
+                                       min_phase_length = 2)
 
-alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,],
-                                  troughs = df[df$TP == -1,],
-                                  timeframe = index(df))
-
-cycle_date = paste(as.Date(index(alt.peaks)),
-                   as.Date(index(alt.troughs)),sep = "/")
+cycle_date = paste(as.Date(index(phase.censor_df$censored_peaks)),
+                   as.Date(index(phase.censor_df$censored_troughs)),sep = "/")
 
 chart.TimeSeries(df$GDP * 10 ^ (-3),
-                 main = "Business Cycle - Recessions\n (quarterly GDP)",
+                 main = "Business Cycle - Phase censored Recessions\n (quarterly GDP)",
                  xaxis = FALSE,ylab = "Billions ILS",
                  period.areas = cycle_date,period.color = "lightblue")
 
 axis(side = 1,at = seq_along(index(df)),labels = index(df))
+
 ```
 
+הפעלת מנגנון סינון אורך המחזור דורש שכל מחזור ימשך לפחות 5 רבעונים, במקרה זה כל המחזורים נמשכים לפחות 5 רבעונים ולכן אין צורך בסינון נוסף.
 
+```{r plot cycle censored bbq}
+
+  # Identify a set of potential peaks and troughs
+  
+cycle.censor_df = get.cycle.censored.points(peaks = phase.censor_df$censored_peaks,
+                                             troughs = phase.censor_df$censored_troughs,
+                                             min_cycle_length = 5)
+
+cycle_date = paste(as.Date(index(cycle.censor_df$censored_peaks)),
+                   as.Date(index(cycle.censor_df$censored_troughs)),sep = "/")
+
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Cycle censored Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
+
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
+
+```
 
 
 ```{r plot bbq approximation}

@@ -91,6 +91,72 @@ get.alternating.troughs = function(peaks, troughs, timeframe){
   
 }
 
+# Censoring rules
+
+get.phase.censored.points = function(peaks,troughs, min_phase_length){
+  
+  tp_df = rbind.xts(peaks, troughs)
+  
+  short_phase_ind = which(diff(index(tp_df)) * 4 < min_phase_length)
+  
+  censor_ind = index(tp_df)[unique(c(short_phase_ind, short_phase_ind + 1))]
+  
+  censored_tp_df = tp_df[!index(tp_df) %in% censor_ind,]
+  
+  if (length(censored_tp_df > 0)){
+  
+    censored_peaks = censored_tp_df[censored_tp_df$TP == 1,]
+  
+  
+    censored_troughs = censored_tp_df[censored_tp_df$TP == -1,]
+    
+    return(list(censored_peaks = censored_peaks,
+                censored_troughs = censored_troughs))
+  
+  } else {
+    
+  return(list(censored_peaks = NULL,
+         censored_troughs = NULL))
+    
+  }
+
+}
+
+get.cycle.censored.points = function(peaks,troughs, min_cycle_length){
+  
+  tp_df = rbind.xts(peaks, troughs)
+  
+  short_cycle_ind_peaks = which(diff(index(peaks)) * 4 < min_cycle_length)
+  
+  short_cycle_ind_troughs = which(diff(index(troughs)) * 4 < min_cycle_length)
+  
+  censor_ind = index(tp_df)[unique(c(short_cycle_ind_peaks,
+                                     short_cycle_ind_peaks + 1,
+                                     short_cycle_ind_troughs,
+                                     short_cycle_ind_troughs+1))]
+  
+  censored_tp_df = tp_df[!index(tp_df) %in% censor_ind,]
+  
+  if (length(censored_tp_df > 0)){
+    
+    censored_peaks = censored_tp_df[censored_tp_df$TP == 1,]
+    
+    
+    censored_troughs = censored_tp_df[censored_tp_df$TP == -1,]
+    
+    return(list(censored_peaks = censored_peaks,
+                censored_troughs = censored_troughs))
+    
+  } else {
+    
+    return(list(censored_peaks = NULL,
+                censored_troughs = NULL))
+    
+  }
+  
+}
+
+
 
 # Approximation to BBQ algorithm
 
@@ -136,9 +202,6 @@ add.cycle.state.bbq.approx = function(df){
     t1 = rownum - 1
     
     t2 = rownum - 2
-    
-    # df$State[rownum] = df$State[prev] * (1 - df$peaks[prev]) + 
-    #                    (1 - df$State[prev]) * df$troughs[prev]
     
     df$State[rownum] = coredata(df$State[t1]) * (1 - coredata(df$State[t2])) + 
                        coredata(df$State[t1]) * coredata(df$State[t2]) * (1 - coredata(df$peaks[t1])) + 
