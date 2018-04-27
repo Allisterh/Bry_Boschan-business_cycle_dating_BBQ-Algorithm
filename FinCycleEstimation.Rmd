@@ -34,36 +34,36 @@ gdp = import.gdp.data(paste0("C:\\Users\\Misha\\Documents\\",
 
 
 
-שיטות לזיהוי מחזור עסקים מתחלקות לשני סוגים: שיטות Turning Point ושיטותFrequency Analysis
+<!-- שיטות לזיהוי מחזור עסקים מתחלקות לשני סוגים: שיטות Turning Point ושיטותFrequency Analysis -->
 
 
-<!-- ```{r plot } -->
+```{r plot }
 
-<!-- # Identify a set of potential peaks and troughs -->
+# Identify a set of potential peaks and troughs
 
-<!-- df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point, -->
-<!--                         align = "center")) -->
+df = cbind.xts(gdp,rollapply(gdp, width = 5, FUN = identify.turning.point,
+                        align = "center"))
 
-<!-- names(df) = c("GDP","TP") -->
+names(df) = c("GDP","TP")
 
-<!-- alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,], -->
-<!--                                   troughs = df[df$TP == -1,], -->
-<!--                                   timeframe = index(df)) -->
+alt.peaks = get.alternating.peaks(peaks = df[df$TP == 1,],
+                                  troughs = df[df$TP == -1,],
+                                  timeframe = index(df))
 
-<!-- alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,], -->
-<!--                                   troughs = df[df$TP == -1,], -->
-<!--                                   timeframe = index(df)) -->
+alt.troughs = get.alternating.troughs(peaks = df[df$TP == 1,],
+                                  troughs = df[df$TP == -1,],
+                                  timeframe = index(df))
 
-<!-- cycle_date = paste(as.Date(index(alt.peaks)), -->
-<!--                    as.Date(index(alt.troughs)),sep = "/") -->
+cycle_date = paste(as.Date(index(alt.peaks)),
+                   as.Date(index(alt.troughs)),sep = "/")
 
-<!-- chart.TimeSeries(df$GDP * 10 ^ (-3), -->
-<!--                  main = "Business Cycle - Recessions\n (quarterly GDP)", -->
-<!--                  xaxis = FALSE,ylab = "Billions ILS", -->
-<!--                  period.areas = cycle_date,period.color = "lightblue") -->
+chart.TimeSeries(df$GDP * 10 ^ (-3),
+                 main = "Business Cycle - Recessions\n (quarterly GDP)",
+                 xaxis = FALSE,ylab = "Billions ILS",
+                 period.areas = cycle_date,period.color = "lightblue")
 
-<!-- axis(side = 1,at = seq_along(index(df)),labels = index(df)) -->
+axis(side = 1,at = seq_along(index(df)),labels = index(df))
 
 
-<!-- ``` -->
+```
 
